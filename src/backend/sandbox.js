@@ -15,6 +15,9 @@ async function createSandbox() {
     await fs.ensureSymlink(projectModules, path.join(currentDir, 'node_modules'));
     await fs.ensureSymlink(projectModules, path.join(incomingDir, 'node_modules'));
 
+    console.log(`Sandbox created with ID: ${sandboxId}`);
+    
+
     return { currentDir, incomingDir, sandboxId };
 }
 

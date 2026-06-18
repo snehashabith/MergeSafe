@@ -9,6 +9,8 @@ async function splitFile(sourcePath, currentDest, incomingDest) {
 
     await fs.writeFile(path.join(currentDest, 'resolved.js'), currentClean);
     await fs.writeFile(path.join(incomingDest, 'resolved.js'), incomingClean);
+
+    console.log('Files have been split and saved to the respective directories.');
 }
 
 module.exports = { splitFile };
