@@ -10,3 +10,5 @@ function calculateTotal(price) {
   return price + tax + shipping;
 >>>>>>> feature/new-tax-rates
 }
+
+module.exports = { calculateTotal };
