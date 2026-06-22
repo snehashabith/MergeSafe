@@ -2,5 +2,8 @@
   "dependencies": {
     "fs-extra": "^11.3.5",
     "jest": "^30.4.2"
+  },
+  "scripts": {
+    "test": "jest"
   }
 }

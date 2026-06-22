@@ -1,6 +1,9 @@
-
+//need to be fixed since there is issue in json output
 function parseTestLogs(rawLogs) {
-    if (!rawLogs) return { message: 'Clear', location: null };
+    console.log(rawLogs);
+    if (!rawLogs || rawLogs.trim() === "") {
+        return { message: 'All tests passed cleanly.', failedFile: null, failedLine: null };
+    }
 
     const lineMatchRegex = /at\s+([^\s]+)\s+\(([^)]+):(\d+):(\d+)\)/;
     const match = rawLogs.match(lineMatchRegex);
@@ -13,7 +16,7 @@ function parseTestLogs(rawLogs) {
         };
     }
 
-    return { message: 'Build error occurred, but location tracing was inconclusive.', location: null };
+    return { message: 'Build error occurred, but location tracing was inconclusive.', failedFile: null, failedLine: null };
 }
 
 module.exports = { parseTestLogs };

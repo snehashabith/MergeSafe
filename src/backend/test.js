@@ -17,6 +17,9 @@ async function testPipeline() {
     await fs.copy(mockTestPath, path.join(paths.currentDir, 'mockConflict.test.js'));
     await fs.copy(mockTestPath, path.join(paths.incomingDir, 'mockConflict.test.js'));
 
+    await fs.copy(path.join(__dirname, '../../package.json'), path.join(paths.currentDir, 'package.json'));
+    await fs.copy(path.join(__dirname, '../../package.json'), path.join(paths.incomingDir, 'package.json'));    
+
     // Execute both versions in the background and capture their results
     const [currentResult, incomingResult] = await Promise.all([
         runTests(paths.currentDir),
@@ -27,11 +30,11 @@ async function testPipeline() {
     const finalReport = {
         currentBranch: {
             stable: currentResult.passed,
-            analysis: parseTestLogs(currentResult.rawLogs)
+            analysis: parseTestLogs(currentResult.logs)
         },
         incomingBranch: {
             stable: incomingResult.passed,
-            analysis: parseTestLogs(incomingResult.rawLogs)
+            analysis: parseTestLogs(incomingResult.logs)
         }
     };
 
