@@ -1,1 +1,11 @@
+# Dependency folders
 node_modules/
+
+# Frontend Extension Build Outputs
+out/
+dist/
+.vscode-test/
+*.vsix
+
+# Local Test Execution Artifacts
+mergeiq-status.json
