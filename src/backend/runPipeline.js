@@ -38,6 +38,8 @@ async function testPipeline() {
         }
     };
 
+    const reportPath = path.join(__dirname,'..','..', 'mergeiq-status.json');
+
     console.log("\nOUTPUT JSON DATA CONTRACT:");
     console.log(JSON.stringify(finalReport, null, 2));
 }
