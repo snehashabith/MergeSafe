@@ -10,7 +10,10 @@
     "Other"
   ],
   "activationEvents": [
-    "onStartupFinished"
+    "onStartupFinished",
+    "onLanguage:plaintext",
+    "onLanguage:typescript",
+    "onLanguage:javascript"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -51,6 +54,4 @@
     "fs-extra": "^11.3.5",
     "jest": "^30.4.2"
   }
-  
 }
-
