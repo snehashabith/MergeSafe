@@ -41,6 +41,7 @@ const incomingFailureDecoration = vscode.window.createTextEditorDecorationType({
 let cachedStatus = { currentStable: false, incomingStable: false };
 
 // ASYNCHRONOUS & NON-BLOCKING: Safe backend contract parsing
+// ASYNCHRONOUS & NON-BLOCKING: Safe backend contract parsing
 async function refreshBranchStatusCache(): Promise<void> {
     try {
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -52,12 +53,11 @@ async function refreshBranchStatusCache(): Promise<void> {
         const rawData = await fs.promises.readFile(configPath, 'utf8');
         const statusData = JSON.parse(rawData);
         
-        // MATCHING THE REAL BACKEND: Mapping directly to your 'testsPassed' root value
-        const isStable = statusData.testsPassed ?? false;
-
+        // MATCHING HER EXACT BACKEND CONTRACT STRUCTURE:
+        // Reads the individual 'passed' states from the nested current/incoming blocks
         cachedStatus = {
-            currentStable: isStable,
-            incomingStable: isStable
+            currentStable: statusData?.current?.passed ?? false,
+            incomingStable: statusData?.incoming?.passed ?? false
         };
     } catch (err: any) {
         // Fall back gracefully if the backend pipeline hasn't generated the JSON file yet
@@ -66,7 +66,6 @@ async function refreshBranchStatusCache(): Promise<void> {
         }
     }
 }
-
 // Instant paint engine avoiding native background overlaps
 function updateDecorations(editor: vscode.TextEditor | undefined) {
     if (!editor) return;
