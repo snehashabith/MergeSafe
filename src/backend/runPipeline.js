@@ -49,9 +49,8 @@ try {
 }
 
 async function testPipeline(targetFilePath) {
-    const activeTestFilePath = targetFilePath || path.join(__dirname, 'mockConflict.test.js');
-    const workspaceRoot = path.resolve(__dirname, '..', '..');
-
+    const activeTestFilePath = targetFilePath || path.join(__dirname, 'mockConflict.js');
+    const workspaceRoot = path.dirname(activeTestFilePath);
     console.log(`\nTesting pipeline for: ${path.basename(activeTestFilePath)}`);
 
     const paths = await createSandbox(); //create sandboxes for both versions
@@ -60,11 +59,11 @@ async function testPipeline(targetFilePath) {
 
     const sourceNodeModules=path.join(workspaceRoot, 'node_modules');
     if (fs.existsSync(sourceNodeModules)) {
-        await fs.copy(sourceNodeModules, path.join(paths.currentDir, 'node_modules'),'junction');
-        await fs.copy(sourceNodeModules, path.join(paths.incomingDir, 'node_modules'),'junction');
+        await fs.ensureSymlink(sourceNodeModules, path.join(paths.currentDir, 'node_modules'),'junction');
+        await fs.ensureSymlink(sourceNodeModules, path.join(paths.incomingDir, 'node_modules'),'junction');
     }
 
-    // Copy your test suite script over to both sandbox folders so jest has target tests to run
+    // Copy test suite script over to both sandbox folders so jest has target tests to run
     await fs.copy(path.join(workspaceRoot, 'package.json'), path.join(paths.currentDir, 'package.json'));
     await fs.copy(path.join(workspaceRoot, 'package.json'), path.join(paths.incomingDir, 'package.json'));
 
@@ -72,8 +71,8 @@ async function testPipeline(targetFilePath) {
    let runMode='test';
 
    if(realTestPath){
-    console.log('Matching unit test found: ${pat.basename(realTestPath)}');
-    const originalFilename= path.basename(activeFilePath,path.extname(activeFilePath));
+    console.log(`Matching unit test found: ${path.basename(realTestPath)}`);
+    const originalFilename= path.basename(activeTestFilePath,path.extname(activeTestFilePath));
 
     const sandboxTestCurrent=path.join(paths.currentDir, path.basename(realTestPath));
     const sandboxTestIncoming=path.join(paths.incomingDir, path.basename(realTestPath));
@@ -82,10 +81,10 @@ async function testPipeline(targetFilePath) {
     await fs.copy(realTestPath, sandboxTestIncoming);
 
     for (const file of [sandboxTestCurrent, sandboxTestIncoming]) {
-        let content= await fs.readFile(file, 'utf-8');
+        let content= await fs.readFile(file, 'utf8');
         const importRegex= new RegExp(`(require\\(['"\\].*\\/)${originalFilename}(['"]\\))`, 'g');
         content = content.replace(importRegex, `$1resolved$2`);
-        await fs.writeFile(file, content, 'utf-8');
+        await fs.writeFile(file, content, 'utf8');
     }
 
 }else{
@@ -101,11 +100,11 @@ const [currentResult, incomingResult] = await Promise.all([
     ]);
 
 const finalReport = {
-    current: {
+    currentBranch: {
         passed: currentResult.passed,
         analysis: parseTestLogs(currentResult.logs)
     },
-    incoming: {
+    incomingBranch: {
         passed: incomingResult.passed,
         analysis: parseTestLogs(incomingResult.logs)
     }
