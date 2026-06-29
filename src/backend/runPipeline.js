@@ -63,6 +63,19 @@ async function testPipeline(targetFilePath) {
         await fs.ensureSymlink(sourceNodeModules, path.join(paths.incomingDir, 'node_modules'),'junction');
     }
 
+    const sourcePackageJson=path.join(workspaceRoot, 'package.json');
+    if (fs.existsSync(sourcePackageJson)) {
+        await fs.copy(sourcePackageJson, path.join(paths.currentDir, 'package.json'));
+        await fs.copy(sourcePackageJson, path.join(paths.incomingDir, 'package.json'));
+    }else{
+        const dummyPackageJson={
+            name: "dummy-package",
+            version: "1.0.0",
+        }
+        await fs.writeJson(path.join(paths.currentDir, 'package.json'), dummyPackageJson, { spaces: 2 });
+        await fs.writeJson(path.join(paths.incomingDir, 'package.json'), dummyPackageJson, { spaces: 2 });
+    }
+
     // Copy test suite script over to both sandbox folders so jest has target tests to run
     await fs.copy(path.join(workspaceRoot, 'package.json'), path.join(paths.currentDir, 'package.json'));
     await fs.copy(path.join(workspaceRoot, 'package.json'), path.join(paths.incomingDir, 'package.json'));
@@ -102,11 +115,13 @@ const [currentResult, incomingResult] = await Promise.all([
 const finalReport = {
     currentBranch: {
         passed: currentResult.passed,
-        analysis: parseTestLogs(currentResult.logs)
+        analysis: parseTestLogs(currentResult.logs),
+        rawLogs: currentResult.logs
     },
     incomingBranch: {
         passed: incomingResult.passed,
-        analysis: parseTestLogs(incomingResult.logs)
+        analysis: parseTestLogs(incomingResult.logs),
+        rawLogs: incomingResult.logs
     }
 };
 

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+const { testPipeline } = require('../src/backend/runPipeline');
 
 // Fixes contrast readability using native VS Code system theme colors
 const currentSuccessDecoration = vscode.window.createTextEditorDecorationType({
@@ -140,12 +141,28 @@ export async function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(jsonWatcher);
     }
 
-    context.subscriptions.push(
+    /*context.subscriptions.push(
         vscode.window.onDidChangeActiveTextEditor(editor => updateDecorations(editor)),
         vscode.workspace.onDidChangeTextDocument(event => {
             const activeEditor = vscode.window.activeTextEditor;
             if (activeEditor && event.document === activeEditor.document) {
                 updateDecorations(activeEditor);
+            }
+        })
+    );*/
+    // CHOSEN MODIFICATION: Added error handling and user alerts to catch silent backend crashes on save
+    context.subscriptions.push(
+        vscode.workspace.onDidSaveTextDocument(async (document) => {
+            if (document.getText().includes('<<<<<<< HEAD')) {
+                try {
+                    vscode.window.showInformationMessage("MergeSafe: Running stability pipeline...");
+                    await testPipeline(document.uri.fsPath);
+                    vscode.window.showInformationMessage("MergeSafe: Pipeline complete!");
+                } catch (error: any) {
+                    // This will force the exact crash reason to pop up on your screen!
+                    vscode.window.showErrorMessage(`MergeSafe Pipeline Error: ${error.message}`);
+                    console.error("Pipeline crashed:", error);
+                }
             }
         })
     );
