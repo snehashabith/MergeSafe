@@ -2,7 +2,7 @@ const fs = require('fs-extra');
 const path = require('path');
 const os = require('os');
 
-async function createSandbox() {
+async function createSandbox(options = {}) {
     const sandboxId = `smart-test-${Date.now()}`;
     const currentDir = path.join(os.tmpdir(), sandboxId, 'current');
     const incomingDir = path.join(os.tmpdir(), sandboxId, 'incoming');
@@ -10,10 +10,10 @@ async function createSandbox() {
     await fs.ensureDir(currentDir);
     await fs.ensureDir(incomingDir);
 
-    // Dynamic node_modules symlinking
-    const projectModules = path.join(__dirname, '..', '..', 'node_modules');
-    await fs.ensureSymlink(projectModules, path.join(currentDir, 'node_modules'));
-    await fs.ensureSymlink(projectModules, path.join(incomingDir, 'node_modules'));
+    if (options.nodeModulesDir && await fs.pathExists(options.nodeModulesDir)) {
+        await fs.ensureSymlink(options.nodeModulesDir, path.join(currentDir, 'node_modules'), 'junction');
+        await fs.ensureSymlink(options.nodeModulesDir, path.join(incomingDir, 'node_modules'), 'junction');
+    }
 
     console.log(`Sandbox created with ID: ${sandboxId}`);
     

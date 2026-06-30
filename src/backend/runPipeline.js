@@ -25,6 +25,23 @@ function findMatchingTestFile(sourceFilePath) {
     return null; 
 }
 
+async function findNearestFile(startDir, fileName) {
+    let currentDir = path.resolve(startDir);
+
+    while (true) {
+        const candidate = path.join(currentDir, fileName);
+        if (await fs.pathExists(candidate)) {
+            return candidate;
+        }
+
+        const parentDir = path.dirname(currentDir);
+        if (parentDir === currentDir) {
+            return null;
+        }
+        currentDir = parentDir;
+    }
+}
+
 //if no tests exist
 async function writeDirectExecutionWrapper(directory) {
     const runnerContent = `
@@ -50,35 +67,31 @@ try {
 
 async function testPipeline(targetFilePath) {
     const activeTestFilePath = targetFilePath || path.join(__dirname, 'mockConflict.js');
-    const workspaceRoot = path.dirname(activeTestFilePath);
+    const sourceDir = path.dirname(activeTestFilePath);
+    const sourcePackageJson = await findNearestFile(sourceDir, 'package.json');
+    const workspaceRoot = sourcePackageJson ? path.dirname(sourcePackageJson) : sourceDir;
+    const sourceNodeModules = path.join(workspaceRoot, 'node_modules');
     console.log(`\nTesting pipeline for: ${path.basename(activeTestFilePath)}`);
 
-    const paths = await createSandbox(); //create sandboxes for both versions
+    const paths = await createSandbox({
+        nodeModulesDir: sourceNodeModules
+    }); //create sandboxes for both versions
+    console.log("Current Sandbox:", paths.currentDir);
+    console.log("Incoming Sandbox:", paths.incomingDir);
 
     await splitFile(activeTestFilePath, paths.currentDir, paths.incomingDir); //split the code 
 
-    const sourceNodeModules=path.join(workspaceRoot, 'node_modules');
-    if (fs.existsSync(sourceNodeModules)) {
-        await fs.ensureSymlink(sourceNodeModules, path.join(paths.currentDir, 'node_modules'),'junction');
-        await fs.ensureSymlink(sourceNodeModules, path.join(paths.incomingDir, 'node_modules'),'junction');
-    }
-
-    const sourcePackageJson=path.join(workspaceRoot, 'package.json');
-    if (fs.existsSync(sourcePackageJson)) {
+    if (sourcePackageJson) {
         await fs.copy(sourcePackageJson, path.join(paths.currentDir, 'package.json'));
         await fs.copy(sourcePackageJson, path.join(paths.incomingDir, 'package.json'));
     }else{
         const dummyPackageJson={
             name: "dummy-package",
             version: "1.0.0",
-        }
+        };
         await fs.writeJson(path.join(paths.currentDir, 'package.json'), dummyPackageJson, { spaces: 2 });
         await fs.writeJson(path.join(paths.incomingDir, 'package.json'), dummyPackageJson, { spaces: 2 });
     }
-
-    // Copy test suite script over to both sandbox folders so jest has target tests to run
-    await fs.copy(path.join(workspaceRoot, 'package.json'), path.join(paths.currentDir, 'package.json'));
-    await fs.copy(path.join(workspaceRoot, 'package.json'), path.join(paths.incomingDir, 'package.json'));
 
    const realTestPath=findMatchingTestFile(activeTestFilePath);
    let runMode='test';
@@ -112,15 +125,28 @@ const [currentResult, incomingResult] = await Promise.all([
         runTests(paths.incomingDir, runMode)
     ]);
 
+const currentAnalysis = parseTestLogs(currentResult.logs);
+const incomingAnalysis = parseTestLogs(incomingResult.logs);
+
 const finalReport = {
+    current: {
+        passed: currentResult.passed,
+        analysis: currentAnalysis,
+        rawLogs: currentResult.logs
+    },
+    incoming: {
+        passed: incomingResult.passed,
+        analysis: incomingAnalysis,
+        rawLogs: incomingResult.logs
+    },
     currentBranch: {
         passed: currentResult.passed,
-        analysis: parseTestLogs(currentResult.logs),
+        analysis: currentAnalysis,
         rawLogs: currentResult.logs
     },
     incomingBranch: {
         passed: incomingResult.passed,
-        analysis: parseTestLogs(incomingResult.logs),
+        analysis: incomingAnalysis,
         rawLogs: incomingResult.logs
     }
 };

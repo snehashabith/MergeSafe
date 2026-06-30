@@ -9,7 +9,7 @@
 		"rootDir": "src",
 		"outDir": "./dist",
 		"strict": true,
-		"types": ["node","jest","mocha"],   /* enable all strict type-checking options */
+		"types": ["node","mocha"],   /* enable all strict type-checking options */
 		
 	}
 }

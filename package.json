@@ -32,6 +32,7 @@
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "extension-validation": "npm run compile-tests && npm run compile && npm run lint",
+    "lint": "eslint .",
     "test:extension": "npm run extension-validation && vscode-test",
     "test": "jest"
   },

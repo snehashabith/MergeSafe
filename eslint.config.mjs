@@ -1,6 +1,8 @@
 import typescriptEslint from "typescript-eslint";
 
 export default [{
+    ignores: ["dist/**", "out/**", "node_modules/**", "src/backend/mockConflict.js"],
+}, {
     files: ["**/*.ts"],
 }, {
     plugins: {
