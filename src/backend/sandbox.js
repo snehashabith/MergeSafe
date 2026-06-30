@@ -21,4 +21,20 @@ async function createSandbox(options = {}) {
     return { currentDir, incomingDir, sandboxId };
 }
 
-module.exports = { createSandbox };
+async function cleanupSandbox(paths) {
+    if (!paths?.sandboxId || !paths.currentDir || !paths.incomingDir) {
+        return;
+    }
+
+    const tempRoot = path.resolve(os.tmpdir());
+    const sandboxRoot = path.resolve(path.join(os.tmpdir(), paths.sandboxId));
+
+    if (!paths.sandboxId.startsWith('smart-test-') || !sandboxRoot.startsWith(tempRoot + path.sep)) {
+        throw new Error(`Refusing to delete unsafe sandbox path: ${sandboxRoot}`);
+    }
+
+    await fs.remove(sandboxRoot);
+    console.log(`Sandbox deleted: ${sandboxRoot}`);
+}
+
+module.exports = { createSandbox, cleanupSandbox };
